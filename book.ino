@@ -19,7 +19,6 @@ int Photo = A0;  //光敏电阻 模拟
 SoftwareSerial BT(5, 6);  //新建对象，接收脚为5(对应蓝牙的T)，发送脚为6(对应蓝牙的R)
 //wifi模块引脚未定
 
-
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 void setup() {
@@ -29,12 +28,9 @@ void setup() {
   pinMode(trigPin, OUTPUT);
   pinMode(echoPin, INPUT);
   pinMode(vibration,OUTPUT);
-  pinMode(LED, OUTPUT);
   pinMode(Photo, INPUT);
   pinMode(touch, INPUT);
-  //pinMode(bookoc, INPUT);
   lcd.init();                      // initialize the lcd
-  lcd.init();
 }
 
 void loop() {
