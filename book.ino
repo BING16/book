@@ -1,15 +1,25 @@
 #include <LiquidCrystal_I2C.h>
-#define trigPin 12
-#define echoPin 13
-int Photo = A0;//光敏电阻 模拟
-int LED = 5;//照明灯
-
 int val;
 int val0 = 180;
-int touch = 8;//触摸传感器
 int touchstate = 0;
-int vibration = 9;//震动马达模块 数字引脚
-//int bookoc = XXX;//判断书本的开合状态
+
+//引脚定义
+/*
+* SD card attached to SPI bus as follows:
+** MOSI - pin 11
+** MISO - pin 12
+** CLK - pin 13x
+** CS - pin 4 (for MKRZero SD: SDCARD_SS_PIN)
+*/
+int trigPin = 4;  //超声波
+int echoPin = 7;  //超声波
+int touch = 8;  //触摸传感器
+int vibration = 9;  //震动马达模块 数字引脚
+int Photo = A0;  //光敏电阻 模拟
+SoftwareSerial BT(5, 6);  //新建对象，接收脚为5(对应蓝牙的T)，发送脚为6(对应蓝牙的R)
+//wifi模块引脚未定
+
+
 LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 void setup() {
