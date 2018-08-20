@@ -1,11 +1,10 @@
-#include <LiquidCrystal_I2C.h>
 #include <SoftwareSerial.h>
-#include <SPI.h>
 #include <SD.h>
 
 int val;
 int val0 = 180;
 int touchstate = 0;
+int led_status = 0;
 
 //引脚定义
 /*
@@ -16,16 +15,13 @@ int touchstate = 0;
 ** CS - pin 4 (for MKRZero SD: SDCARD_SS_PIN)
 */
 #define BAUDRATE 57600
-#define DEBUGOUTPUT 0
 #define trigPin 8  //超声波
 #define echoPin 7  //超声波
 #define touch 9  //触摸传感器
 #define vibration 3  //震动马达模块 数字引脚
 int Photo = A0;  //光敏电阻 模拟
-SoftwareSerial BT_led(3, 6);  //新建对象，接收脚为3(对应蓝牙的T)，发送脚为6(对应蓝牙的R)
+SoftwareSerial BT_led(0, 1);  //新建对象，接收脚为3(对应蓝牙的T)，发送脚为6(对应蓝牙的R) 0没用
 //wifi模块引脚未定
-
-LiquidCrystal_I2C lcd(0x27, 16, 2); // set the LCD address to 0x27 for a 16 chars and 2 line display
 
 File myFile;
 
@@ -33,8 +29,7 @@ File myFile;
 byte generatedChecksum = 0;
 byte checksum = 0; 
 int payloadLength = 0;
-byte payloadData[64] = {
-  0};
+byte payloadData[64] = {0};
 byte poorQuality = 0;
 byte attention = 0;
 byte meditation = 0;
@@ -44,11 +39,11 @@ long lastReceivedPacket = 0;
 boolean bigPacket = false;
 
 void send_ligh(int ligh);
-void get_brain();
-void show_lcd(String l);
+void send_ligh2(int ligh);
+//void get_brain();
 int get_distance();
 int get_ligh();
-byte ReadOneByte()；
+//byte ReadOneByte();
 void Open_File(String Name);
 void Close_File();
 void Write_File(String line);
@@ -63,7 +58,9 @@ int get_distance(){
 	digitalWrite(trigPin, LOW);
 	duration = pulseIn(echoPin, HIGH);
 	distance = (duration / 2) / 29.1;
-	
+
+ //Serial.print("distance: ");
+  //Serial.println(distance);
 	return(distance);
 }
 
@@ -74,8 +71,6 @@ int get_ligh(){
 
 void Open_File(String Name) {
 	Serial.print("Initializing SD card...");
-	W = 0;
-	H = 0;
 
 	if (!SD.begin(4)) {
 		Serial.println("initialization failed!");
@@ -103,142 +98,178 @@ void Close_File() {
 
 void Write_File(String line){
 	myFile.print(line);
+ Serial.print("line: ");
+ Serial.println(line);
 }
 
-void show_lcd(String l){
-	lcd.backlight();
-	
-	lcd.setCursor(0, 0);
-	lcd.setCursor(0, 1);
-	lcd.print("luminosity");
-	lcd.print(l);
-	Serial.print(distance);
-	Serial.println(" cm");
-	delay(10);
-	lcd.clear();
+
+//byte ReadOneByte() {
+//  int ByteRead;
+//
+//  while(!Serial.available());//{
+//  ByteRead = Serial.read();
+//
+//#if DEBUGOUTPUT  
+//  //Serial.print((char)ByteRead);   // echo the same byte out the USB serial (for debug purposes)
+//#endif
+//
+//  return ByteRead;
+//  //}
+//  //else{
+//  //  return 0;
+//  //  }
+//}
+
+
+void send_ligh(int ligh){
+  Serial.print('l');
+  Serial.print(String(ligh));
+  Serial.print('e');
 }
 
-byte ReadOneByte() {
-  int ByteRead;
-
-  while(!Serial.available());
-  ByteRead = Serial.read();
-
-#if DEBUGOUTPUT  
-  Serial.print((char)ByteRead);   // echo the same byte out the USB serial (for debug purposes)
-#endif
-
-  return ByteRead;
+void send_ligh2(int ligh){
+  Serial.print('l');
+  Serial.print(String(ligh));
+  Serial.print('o');
 }
 
 void setup() {
   // put your setup code here, to run once:
 	
-	Serial.begin(BAUDRATE);           // USB
+  Serial.begin(9600);
 	BT_led.begin(9600);
 	pinMode(trigPin, OUTPUT);
 	pinMode(echoPin, INPUT);
 	pinMode(vibration,OUTPUT);
 	pinMode(Photo, INPUT);
 	pinMode(touch, INPUT);
-	lcd.init();                      // initialize the lcd
+
 	Open_File("brain.txt");
 }
 
 void loop() {
 	long distance = get_distance();
 	
-	//脑电部分、
-    if(ReadOneByte() == 170) {
-
-      payloadLength = ReadOneByte();
-      if(payloadLength > 169)                      //Payload length can not be greater than 169
-          return;
-
-      generatedChecksum = 0;        
-      for(int i = 0; i < payloadLength; i++) {  
-        payloadData[i] = ReadOneByte();            //Read payload into memory
-        generatedChecksum += payloadData[i];
-      }   
-
-      checksum = ReadOneByte();                      //Read checksum byte from stream      
-      generatedChecksum = 255 - generatedChecksum;   //Take one's compliment of generated checksum
-
-        if(checksum == generatedChecksum) {    
-
-        poorQuality = 200;
-        attention = 0;
-        meditation = 0;
-
-        for(int i = 0; i < payloadLength; i++) {    // Parse the payload
-          switch (payloadData[i]) {
-          case 2:
-            i++;            
-            poorQuality = payloadData[i];
-            bigPacket = true;            
-            break;
-          case 4:
-            i++;
-            attention = payloadData[i];                        
-            break;
-          case 5:
-            i++;
-            meditation = payloadData[i];
-            break;
-          case 0x80:
-            i = i + 3;
-            break;
-          case 0x83:
-            i = i + 25;      
-            break;
-          default:
-            break;
-          } // switch
-        } // for loop
-
-#if !DEBUGOUTPUT
-
-        // *** Add your code here ***
-
-        if(bigPacket) {
-          if(poorQuality == 0){
-            digitalWrite(LED, HIGH);
-			Write_File(String(attention));
-			Write_File("\n");
-		  }
-          else
-            digitalWrite(LED, LOW);
-          Serial.print("PoorQuality: ");
-          Serial.print(poorQuality, DEC);
-          Serial.print(" Attention: ");
-          Serial.print(attention, DEC);
-          Serial.print(" Time since last packet: ");
-          Serial.print(millis() - lastReceivedPacket, DEC);
-          lastReceivedPacket = millis();
-          Serial.print("\n");
-          }                     
-        }
-#endif        
-        bigPacket = false;        
-      }
-      else {
-        // Checksum Error
-      }  // end if else for checksum
-    } // end if read 0xAA byte
-  } // end if read 0xAA byte
+//	//脑电部分
+//  for(int i=0;i<=0;i++){
+//    Serial.print("ReadOneByte(): ");
+//    byte readonebyte = ReadOneByte();
+//    Serial.println(readonebyte);
+// if(readonebyte == 170) {
+//    if(ReadOneByte() == 170) {
+//
+//      payloadLength = ReadOneByte();
+//      Serial.print("payloadLength:");
+//      Serial.println(payloadLength);
+//      if(payloadLength > 169)                      //Payload length can not be greater than 169
+//          //return;
+//          break;
+//
+//      generatedChecksum = 0;        
+//      for(int i = 0; i < payloadLength; i++) {  
+//        payloadData[i] = ReadOneByte();            //Read payload into memory
+//        generatedChecksum += payloadData[i];
+//      }   
+//
+//      checksum = ReadOneByte();                      //Read checksum byte from stream      
+//      generatedChecksum = 255 - generatedChecksum;   //Take one's compliment of generated checksum
+//
+//        if(checksum == generatedChecksum) {    
+//
+//        poorQuality = 200;
+//        attention = 0;
+//        meditation = 0;
+//
+//        for(int i = 0; i < payloadLength; i++) {    // Parse the payload
+//          Serial.print("payloadData[");
+//          Serial.print(i);
+//          Serial.print("]: ");
+//          Serial.println(payloadData[i]);
+//          switch (payloadData[i]) {
+//          case 2:
+//            i++;        
+//                      Serial.print("payloadData[");
+//          Serial.print(i);
+//          Serial.print("]: ");
+//          Serial.println(payloadData[i]);    
+//            poorQuality = payloadData[i];
+//            bigPacket = true;            
+//            break;
+//          case 4:
+//            i++;
+//                      Serial.print("payloadData[");
+//          Serial.print(i);
+//          Serial.print("]: ");
+//          Serial.println(payloadData[i]);
+//            attention = payloadData[i];                        
+//            break;
+//          case 5:
+//            i++;
+//                      Serial.print("payloadData[");
+//          Serial.print(i);
+//          Serial.print("]: ");
+//          Serial.println(payloadData[i]);
+//            meditation = payloadData[i];
+//            break;
+//          case 0x80:
+//            i = i + 3;
+//            break;
+//          case 0x83:
+//            i = i + 25;      
+//            break;
+//          default:
+//            break;
+//          } // switch
+//        } // for loop
+//
+//#if !DEBUGOUTPUT
+//
+//        // *** Add your code here ***
+//
+//        Serial.print("bigPacket: ");
+//        Serial.println(bigPacket);
+//        bigPacket = 1;
+//        if(bigPacket) {
+//          if(poorQuality == 0){
+//            //digitalWrite(LED, HIGH);
+//			Write_File(String(attention));
+//			Write_File("\n");
+//		  }
+//          //else
+//            //digitalWrite(LED, LOW);
+//          Serial.print("PoorQuality: ");
+//          Serial.print(poorQuality, DEC);
+//          Serial.print(" Attention: ");
+//          Serial.print(attention, DEC);
+//          Serial.print(" Time since last packet: ");
+//          Serial.print(millis() - lastReceivedPacket, DEC);
+//          lastReceivedPacket = millis();
+//          Serial.print("\n");
+//          }                     
+//        
+//#endif        
+//        bigPacket = false;        
+//      }
+//      else {
+//        // Checksum Error
+//      }  // end if else for checksum
+//    } // end if read 0xAA byte
+//  } // end if read 0xAA byte
+//  }
 	
 	touchstate = digitalRead(touch);
-	if (touchstate == HIGH){   //按下才亮灯
-		show_lcd(String (val));
-		if (val <= 150) {
+  val = analogRead(Photo);            // reads the value of the potentiometer (value between 0 and 1023)
+  val = map(val, 0, 1023, 0, 255);
+	if (touchstate == 1){   //按下才亮灯
+		//if (val <= 150) {
 			send_ligh(val);
-		}
-		else {
-			send_ligh(0);
-		}
+		//}
+		//else {
+		//	send_ligh(0);
+		//}
 	}
 	else{
-		send_ligh(0);
+   send_ligh2(val);
 	}
 	
 
