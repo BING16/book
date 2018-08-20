@@ -15,8 +15,13 @@ void set_led(int ligh){
     digitalWrite(led_f, HIGH);
   }
   else{
-	  digitalWrite(led_f, LOW);
+    digitalWrite(led_f, LOW);
   }
+}
+
+void set_led2(int ligh){
+  analogWrite(led_z, ligh);
+  digitalWrite(led_f, HIGH);
 }
 
 void setup(){
@@ -40,6 +45,9 @@ void loop(){
     else if(val == 'e'){
       set_led(ligh);
     }
+    else if(val == 'o'){
+      set_led2(ligh);
+      }
     else {
       ligh = ligh*10 + (val - '0');
     }
