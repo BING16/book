@@ -1,9 +1,6 @@
-
 #include "LiquidCrystal_I2C.h"
 #include "dht11.h"
-
 dht11 DHT11;
-int page = 0;
 
 #define DHT11PIN 2
 int dustPin=0;
@@ -14,35 +11,10 @@ int delayTime2=40;
 float offTime=9680;
 float calcVoltage=0;
 float dustDensity=0;
+int sensorPin = A1;
+int sensorValue = 0; 
+int ledPin = 6;
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
-
-void choose_page();
-void PAGE1();
-void PAGE2();
-void PAGE3();
-void PAGE4();
-double dewPoint(double celsius, double humidity);
-double dewPointFast(double celsius, double humidity);
-
-void choose_page(){
-  Serial.println(digitalRead(A1));
-  if (digitalRead(A1) == 1){
-    page = 1;
-    return;
-  }
-  if (digitalRead(A2) == 1){
-    page = 2;
-    return;
-  }
-  if (digitalRead(A3) == 1){
-    page = 3;
-    return;
-  }
-  if (digitalRead(A7) == 1){
-    page =4;
-    return;
-  }
-}
 
 // 露点（点在此温度时，空气饱和并产生露珠）
 // 参考: http://wahiduddin.net/calc/density_algorithms.htm 
@@ -70,17 +42,45 @@ double dewPointFast(double celsius, double humidity)
         return Td;
 }
 
-void PAGE1(){
-    int chk = DHT11.read(DHT11PIN);
-  digitalWrite(ledPower,LOW);
-  delayMicroseconds(delayTime);
-  dustVal=analogRead(dustPin);
-  delayMicroseconds(delayTime2);
-  digitalWrite(ledPower,HIGH);
-  delayMicroseconds(offTime);
-  calcVoltage=dustVal*(5.0/1024.0);
-  dustDensity=0.17*calcVoltage-0.1;
-  dustDensity=abs(dustDensity*1000);
+void setup()
+{ 
+  Serial.begin(9600);
+   pinMode(6, OUTPUT);
+   lcd.init();
+   lcd.backlight();                     // initialize the lcd 
+   // Print a message to the LCD.
+    pinMode(ledPower,OUTPUT);
+    pinMode(dustPin,INPUT);
+    pinMode(sensorPin,INPUT);
+}
+
+
+void loop()
+{
+     lcd.init();
+   lcd.backlight();                     // initialize the lcd 
+    //sensorValue = analogRead(sensorPin);
+    //Serial.println(sensorValue);
+    int i = random();
+  //if (sensorValue >= 400){
+  //  sensorValue = sensorValue *255/1024;
+    analogWrite(ledPin,i%255 );
+  //delay(500);
+  //}else{
+  //   digitalWrite(ledPin, LOW);}
+  //Serial.println(sensorValue, DEC);
+  
+  int chk = DHT11.read(DHT11PIN);
+//
+digitalWrite(ledPower,LOW);
+delayMicroseconds(delayTime);
+dustVal=analogRead(dustPin);
+delayMicroseconds(delayTime2);
+digitalWrite(ledPower,HIGH);
+delayMicroseconds(offTime);
+calcVoltage=dustVal*(5.0/1024.0);
+dustDensity=0.17*calcVoltage-0.1;
+dustDensity=abs(dustDensity*1000);
 //
    lcd.clear();
    lcd.setCursor(0,0);
@@ -89,7 +89,7 @@ void PAGE1(){
    lcd.setCursor(10,1);
    lcd.print(String(dustDensity));}
    lcd.setCursor(13,0);
-   delay(2000);
+   delay(1500);
   //温度显示
    lcd.clear();
    lcd.setCursor(0,0);
@@ -105,59 +105,5 @@ void PAGE1(){
    lcd.print(String(DHT11.humidity));
    lcd.setCursor(14,1);
    lcd.print("%");
-   delay(2000);
-}
-
-void PAGE2(){
-  
-}
-
-void PAGE3(){
-  
-}
-
-void PAGE4(){
-  
-}
-
-void setup(){
-  Serial.begin(9600);
-  for (int i = 0; i <= 5; i++){
-    pinMode(i, INPUT);
-  }
-  for (int i = 6; i <= 8; i++){
-    pinMode(i, OUTPUT);
-  }
-  for (int i = 9; i <= 12; i++){
-    pinMode(i, OUTPUT);
-  }
-  pinMode(A0, INPUT);
-  pinMode(A4, INPUT);
-  pinMode(A5, INPUT);
-  pinMode(A1, INPUT);
-  pinMode(A2, INPUT);
-  pinMode(A3, INPUT);
-  pinMode(A7, INPUT);
-  
-  lcd.init();
-  lcd.backlight();
-}
-
-void loop(){
-  choose_page();
-  
-  switch(page){
-    case 1:
-      PAGE1();
-      break;
-    case 2:
-      PAGE2();
-      break;
-    case 3:
-      PAGE3();
-      break;
-    case 4:
-      PAGE4();
-      break;
-  }
+   delay(1500);
 }
