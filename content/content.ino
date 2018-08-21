@@ -39,7 +39,7 @@ void choose_page(){
     return;
   }
   if (digitalRead(A7) == 1){
-    page = 4;
+    page =4;
     return;
   }
 }
