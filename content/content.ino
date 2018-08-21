@@ -1,3 +1,4 @@
+
 #include "LiquidCrystal_I2C.h"
 #include "dht11.h"
 
@@ -21,25 +22,26 @@ void PAGE2();
 void PAGE3();
 void PAGE4();
 double dewPoint(double celsius, double humidity);
-double dewPointFast(double celsius, double humidity)
+double dewPointFast(double celsius, double humidity);
 
 void choose_page(){
-	if (digitalRead(A1) == 1){
-		page = 1;
-		return;
-	}
-	if (digitalRead(A2) == 1){
-		page = 2;
-		return;
-	}
-	if (digitalRead(A3) == 1){
-		page = 3;
-		return;
-	}
-	if (digitalRead(A7) == 1){
-		page = 4;
-		return;
-	}
+  Serial.println(digitalRead(A1));
+  if (digitalRead(A1) == 1){
+    page = 1;
+    return;
+  }
+  if (digitalRead(A2) == 1){
+    page = 2;
+    return;
+  }
+  if (digitalRead(A3) == 1){
+    page = 3;
+    return;
+  }
+  if (digitalRead(A7) == 1){
+    page = 4;
+    return;
+  }
 }
 
 // 露点（点在此温度时，空气饱和并产生露珠）
@@ -69,16 +71,16 @@ double dewPointFast(double celsius, double humidity)
 }
 
 void PAGE1(){
-	  int chk = DHT11.read(DHT11PIN);
-	digitalWrite(ledPower,LOW);
-	delayMicroseconds(delayTime);
-	dustVal=analogRead(dustPin);
-	delayMicroseconds(delayTime2);
-	digitalWrite(ledPower,HIGH);
-	delayMicroseconds(offTime);
-	calcVoltage=dustVal*(5.0/1024.0);
-	dustDensity=0.17*calcVoltage-0.1;
-	dustDensity=abs(dustDensity*1000);
+    int chk = DHT11.read(DHT11PIN);
+  digitalWrite(ledPower,LOW);
+  delayMicroseconds(delayTime);
+  dustVal=analogRead(dustPin);
+  delayMicroseconds(delayTime2);
+  digitalWrite(ledPower,HIGH);
+  delayMicroseconds(offTime);
+  calcVoltage=dustVal*(5.0/1024.0);
+  dustDensity=0.17*calcVoltage-0.1;
+  dustDensity=abs(dustDensity*1000);
 //
    lcd.clear();
    lcd.setCursor(0,0);
@@ -107,54 +109,55 @@ void PAGE1(){
 }
 
 void PAGE2(){
-	
+  
 }
 
 void PAGE3(){
-	
+  
 }
 
 void PAGE4(){
-	
+  
 }
 
 void setup(){
-	for (int i = 0; i <= 5; i++){
-		pinMode(i, INPUT);
-	}
-	for (int i = 6; i <= 8; i++){
-		pinMode(i, OUTPUT);
-	}
-	for (int i = 9; i <= 12; i++){
-		pinMode(i, OUTPUT);
-	}
-	pinMode(A0, INPUT);
-	pinMode(A4, INPUT);
-	pinMode(A5, INPUT);
-	pinMode(A1, INPUT);
-	pinMode(A2, INPUT);
-	pinMode(A3, INPUT);
-	pinMode(A7, INPUT);
-	
-	lcd.init();
-	lcd.backlight();
+  Serial.begin(9600);
+  for (int i = 0; i <= 5; i++){
+    pinMode(i, INPUT);
+  }
+  for (int i = 6; i <= 8; i++){
+    pinMode(i, OUTPUT);
+  }
+  for (int i = 9; i <= 12; i++){
+    pinMode(i, OUTPUT);
+  }
+  pinMode(A0, INPUT);
+  pinMode(A4, INPUT);
+  pinMode(A5, INPUT);
+  pinMode(A1, INPUT);
+  pinMode(A2, INPUT);
+  pinMode(A3, INPUT);
+  pinMode(A7, INPUT);
+  
+  lcd.init();
+  lcd.backlight();
 }
 
 void loop(){
-	choose_page();
-	
-	switch(page){
-		case 1:
-			PAGE1();
-			break;
-		case 2:
-			PAGE2();
-			break;
-		case 3:
-			PAGE3();
-			break;
-		case 4:
-			PAGE4();
-			break;
-	}
+  choose_page();
+  
+  switch(page){
+    case 1:
+      PAGE1();
+      break;
+    case 2:
+      PAGE2();
+      break;
+    case 3:
+      PAGE3();
+      break;
+    case 4:
+      PAGE4();
+      break;
+  }
 }
